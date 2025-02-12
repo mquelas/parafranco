@@ -28,45 +28,9 @@ func CheckUserExists(userID uint) (bool, error) {
 	return false, fmt.Errorf("unexpected response from user API: %d", resp.StatusCode)
 }
 
-// CheckHotelExists verifica si un hotel existe en la hotel-api
-func CheckHotelExists(hotelID string) (bool, error) {
-	url := fmt.Sprintf("http://localhost:8080/hotels/getHotel/%s", hotelID)
-	resp, err := http.Get(url)
-	if err != nil {
-		return false, fmt.Errorf("error contacting hotel API: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusOK {
-		return true, nil
-	} else if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusNotFound {
-		return false, nil
-	}
-
-	return false, fmt.Errorf("unexpected response from hotel API: %d", resp.StatusCode)
-}
-
 // CreateReservation crea una nueva reserva
 func CreateReservation(reservationDto dto.ReservationDTO) (*models.Reservation, error) {
-	// Verificar existencia del usuario
-	userExists, err := CheckUserExists(reservationDto.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking user existence: %v", err)
-	}
-	if !userExists {
-		return nil, fmt.Errorf("user does not exist")
-	}
-
-	// Verificar existencia del hotel
-	hotelExists, err := CheckHotelExists(reservationDto.HotelID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking hotel existence: %v", err)
-	}
-	if !hotelExists {
-		return nil, fmt.Errorf("hotel does not exist")
-	}
-
-	// Si ambas verificaciones son exitosas, proceder con la reserva
+	// Crear la reserva directamente sin verificar el hotel
 	reservation := models.Reservation{
 		UserID:     reservationDto.UserID,
 		HotelID:    reservationDto.HotelID,

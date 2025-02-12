@@ -2,11 +2,9 @@ package dto
 
 import "time"
 
-// DTO para la respuesta de la reserva completa
 type ReservationDTO struct {
-	ID         uint      `json:"id"`
-	UserID     uint      `json:"userId"`
-	HotelID    string    `json:"hotelId"`
-	FechaDesde time.Time `json:"fechaDesde"`
-	FechaHasta time.Time `json:"fechaHasta"`
+	HotelID    string    `json:"hotelId" binding:"required"`
+	FechaDesde time.Time `json:"fechaDesde" binding:"required"`
+	FechaHasta time.Time `json:"fechaHasta" binding:"required"`
+	UserID     uint      `json:"-"` // Evitar que el usuario lo pase manualmente
 }

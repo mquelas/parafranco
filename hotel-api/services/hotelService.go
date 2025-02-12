@@ -160,6 +160,15 @@ func GetHotels() ([]models.Hotel, error) {
 
 // Actualizar un hotel
 func UpdateHotel(id primitive.ObjectID, hotelDto models.Hotel) (models.Hotel, error) {
+	// Excluir el campo `_id` para evitar errores en MongoDB
+	updateData := bson.M{
+		"name":      hotelDto.Name,
+		"address":   hotelDto.Address,
+		"city":      hotelDto.City,
+		"country":   hotelDto.Country,
+		"amenities": hotelDto.Amenities,
+	}
+
 	// Verificar que las amenidades existan
 	if err := validateAmenitiesExist(hotelDto.Amenities); err != nil {
 		return models.Hotel{}, err
@@ -167,16 +176,38 @@ func UpdateHotel(id primitive.ObjectID, hotelDto models.Hotel) (models.Hotel, er
 
 	collection := initializers.DB.Collection("hotels")
 
-	update := bson.M{
-		"$set": hotelDto,
-	}
-
-	_, err := collection.UpdateOne(context.Background(), bson.M{"_id": id}, update)
+	// Realizar la actualización y obtener el hotel actualizado
+	err := collection.FindOneAndUpdate(context.Background(), bson.M{"_id": id}, bson.M{"$set": updateData}).Decode(&hotelDto)
 	if err != nil {
 		return models.Hotel{}, err
 	}
 
 	return hotelDto, nil
+}
+
+// CheckDuplicateHotelExcludingCurrent verifica si ya existe un hotel con el mismo nombre y dirección, excluyendo el hotel actual
+func CheckDuplicateHotelExcludingCurrent(hotelID primitive.ObjectID, hotelDto models.Hotel) (bool, error) {
+	collection := initializers.DB.Collection("hotels")
+
+	// Buscar si hay otro hotel con el mismo nombre y dirección
+	var existingHotel models.Hotel
+	filter := bson.M{
+		"name":    hotelDto.Name,
+		"address": hotelDto.Address,
+		"_id":     bson.M{"$ne": hotelID}, // Excluir el hotel actual
+	}
+
+	err := collection.FindOne(context.Background(), filter).Decode(&existingHotel)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// No hay hotel duplicado
+			return false, nil
+		}
+		return false, err // Otro error, posiblemente de conexión a la base de datos
+	}
+
+	// Si encontramos un hotel, devolvemos true
+	return true, nil
 }
 
 // Eliminar un hotel

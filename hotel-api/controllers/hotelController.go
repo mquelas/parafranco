@@ -77,7 +77,6 @@ func (ctrl *HotelController) GetHotels(c *gin.Context) {
 // Actualizar un hotel
 func (ctrl *HotelController) UpdateHotel(c *gin.Context) {
 	id := c.Param("id")
-	var hotelDto models.Hotel
 
 	// Convertir el ID de string a primitive.ObjectID
 	objectID, err := primitive.ObjectIDFromHex(id)
@@ -86,13 +85,14 @@ func (ctrl *HotelController) UpdateHotel(c *gin.Context) {
 		return
 	}
 
+	var hotelDto models.Hotel
 	if err := c.ShouldBindJSON(&hotelDto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Verificar si el hotel con el mismo nombre y dirección ya existe, pero excluyendo este hotel
-	duplicate, err := services.CheckDuplicateHotel(hotelDto)
+	// Verificar si ya existe un hotel con el mismo nombre y dirección, excluyendo el hotel actual
+	duplicate, err := services.CheckDuplicateHotelExcludingCurrent(objectID, hotelDto)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check for duplicate hotel"})
 		return

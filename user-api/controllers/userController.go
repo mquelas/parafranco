@@ -50,6 +50,26 @@ func Login(c *gin.Context) {
 	})
 }
 
+// GetCurrentUser devuelve la información del usuario autenticado
+func GetCurrentUser(c *gin.Context) {
+	// Obtener usuario desde el middleware (si está autenticado)
+	userData, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No autorizado: Usuario no autenticado"})
+		return
+	}
+
+	// Convertir a map[string]interface{}
+	user, ok := userData.(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No autorizado: Datos de usuario inválidos"})
+		return
+	}
+
+	// Enviar respuesta con el ID del usuario autenticado
+	c.JSON(http.StatusOK, gin.H{"id": user["id"]})
+}
+
 // Validate controller function
 func Validate(c *gin.Context) {
 	user, err := services.Validate(c)
@@ -59,22 +79,6 @@ func Validate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"user": user})
-}
-
-func GetCurrentUser(c *gin.Context) {
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-
-	var foundUser models.User
-	if err := initializers.DB.First(&foundUser, user.(models.User).ID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"user": foundUser})
 }
 
 func Logout(c *gin.Context) {

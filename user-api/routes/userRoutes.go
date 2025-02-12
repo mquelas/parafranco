@@ -18,5 +18,6 @@ func SetupUserRoutes(router *gin.Engine) {
 		userGroup.POST("/logout", controllers.Logout)                                 // Cerrar sesión
 		// Nueva ruta para verificar si el usuario existe
 		userGroup.GET("/checkExistence/:userID", controllers.CheckUserExistence) // Verificar existencia de usuario
+		userGroup.GET("/me", middleware.RequireAuth, controllers.GetCurrentUser)
 	}
 }
